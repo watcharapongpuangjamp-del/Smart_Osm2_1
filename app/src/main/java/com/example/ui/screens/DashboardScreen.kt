@@ -48,6 +48,7 @@ fun DashboardScreen(
     onNavigateToNewHousehold: () -> Unit = {},
     onNavigateToMap: () -> Unit = {},
     onNavigateToInfo: () -> Unit = {},
+    onNavigateToPlanOfWork: () -> Unit = {},
     onNavigateToHouseDetail: (Long) -> Unit = {},
     onNavigateToQrScan: () -> Unit = {}
 ) {
@@ -385,12 +386,12 @@ fun DashboardScreen(
                         ) {
                             QuickActionCard(
                                 modifier = Modifier.weight(1f),
-                                title = "แผนที่ชุมชน",
-                                subtitle = "พิกัด & กลุ่มบ้าน ($gpsHouseholdsCount)",
-                                icon = Icons.Filled.LocationOn,
-                                iconBgColor = if (isDark) Color(0xFF0C4A6E) else Color(0xFFE0F2FE),
-                                iconTintColor = if (isDark) Color(0xFF38BDF8) else Color(0xFF0284C7),
-                                onClick = onNavigateToMap
+                                title = "แผนปฏิบัติงาน",
+                                subtitle = "ตารางงาน อสม. & เยี่ยมบ้าน",
+                                icon = Icons.Filled.FactCheck,
+                                iconBgColor = if (isDark) Color(0xFF1E3A8A) else Color(0xFFDBEAFE),
+                                iconTintColor = if (isDark) Color(0xFF60A5FA) else Color(0xFF2563EB),
+                                onClick = onNavigateToPlanOfWork
                             )
                             QuickActionCard(
                                 modifier = Modifier.weight(1f),

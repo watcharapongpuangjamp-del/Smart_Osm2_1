@@ -159,6 +159,9 @@ fun AppNavigation(
                     onNavigateToMap = {
                         navController.navigate(BottomNavItem.Map.route)
                     },
+                    onNavigateToPlanOfWork = {
+                        navController.navigate("plan_of_work")
+                    },
                     onNavigateToInfo = {
                         navController.navigate(BottomNavItem.Info.route)
                     },
@@ -207,6 +210,7 @@ fun AppNavigation(
                 DeveloperInfoScreen(
                     onNavigateToCloudSync = { navController.navigate("cloud_sync") },
                     onNavigateToHealthKnowledge = { navController.navigate("health_knowledge") },
+                    onNavigateToPlanOfWork = { navController.navigate("plan_of_work") },
                     onNavigateToDiagnostic = { navController.navigate("diagnostic") },
                     onNavigateToLogin = { navController.navigate("login") },
                     onNavigateToUserProfile = { navController.navigate("user_profile") }
@@ -238,6 +242,15 @@ fun AppNavigation(
             composable("health_knowledge") {
                 HealthKnowledgeScreen(
                     onBack = { navController.popBackStack() }
+                )
+            }
+            composable("plan_of_work") {
+                PlanOfWorkScreen(
+                    viewModel = viewModel,
+                    onBack = { navController.popBackStack() },
+                    onNavigateToHouseDetail = { householdId ->
+                        navController.navigate("house_detail/$householdId")
+                    }
                 )
             }
             composable("qr_scanner") {
