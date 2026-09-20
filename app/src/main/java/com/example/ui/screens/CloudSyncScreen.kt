@@ -191,9 +191,9 @@ fun CloudSyncScreen(
                 }
             }
 
-            // Section 1: Local File Export
+            // Section 1: Multi-Cloud Drive Backup & Export
             Text(
-                text = "1. การสำรองข้อมูลลงไฟล์ท้องถิ่น (Local Export)",
+                text = "1. การสำรองไฟล์ขึ้นคลาวด์ไดรฟ์ (Google Drive, OneDrive, Cloud Drives)",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = EmeraldPrimary
@@ -206,31 +206,64 @@ fun CloudSyncScreen(
             ) {
                 Column(
                     modifier = Modifier.padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                     Text(
-                        text = "ส่งออกข้อมูลทะเบียนประชากรและครัวเรือนทั้งหมดเป็นไฟล์ Excel (.xlsx) เพื่อเก็บไว้เป็นสำรองบนอุปกรณ์หรือแชร์ต่อ",
+                        text = "ส่งออกข้อมูลประชากรและครัวเรือนเป็นไฟล์ Excel (.xlsx) และเลือกบันทึกลง คลาวด์ไดรฟ์ (Google Drive, OneDrive, Dropbox, Nextcloud) หรือบันทึกลงในเครื่อง",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+
+                    // Multi-Cloud Share / Save Button
                     Button(
-                        onClick = { exportLauncher.launch("population_backup_${System.currentTimeMillis()}.xlsx") },
+                        onClick = {
+                            viewModel.exportAndShareExcelData(context) { success, shareUri, msg ->
+                                if (success && shareUri != null) {
+                                    val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                                        type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                                        putExtra(Intent.EXTRA_STREAM, shareUri)
+                                        putExtra(Intent.EXTRA_SUBJECT, "สำรองข้อมูล Smart OSM ทะเบียนประชากร")
+                                        putExtra(Intent.EXTRA_TEXT, "ไฟล์สำรองข้อมูลทะเบียนประชากรและครัวเรือน Smart OSM")
+                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                    }
+                                    val chooser = Intent.createChooser(sendIntent, "เลือกบันทึกไปยัง คลาวด์ไดรฟ์ หรือส่งต่อ")
+                                    context.startActivity(chooser)
+                                    actionMessage = "เปิดเมนูเลือกคลาวด์ไดรฟ์เรียบร้อยแล้ว"
+                                    isError = false
+                                } else {
+                                    isError = true
+                                    actionMessage = msg
+                                }
+                            }
+                        },
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),
                         shape = RoundedCornerShape(12.dp)
                     ) {
+                        Icon(Icons.Filled.CloudUpload, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("บันทึกขึ้น Cloud Drive (Google Drive / OneDrive / อื่นๆ)", fontWeight = FontWeight.Bold)
+                    }
+
+                    // Direct Save to Storage (SAF)
+                    OutlinedButton(
+                        onClick = { exportLauncher.launch("population_backup_${System.currentTimeMillis()}.xlsx") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = EmeraldPrimary)
+                    ) {
                         Icon(Icons.Filled.Download, contentDescription = null)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("ส่งออกฐานข้อมูลเป็นไฟล์ Excel (.xlsx)", fontWeight = FontWeight.Bold)
+                        Text("บันทึกไฟล์ Excel (.xlsx) ลงพื้นที่เก็บข้อมูลในเครื่อง", fontWeight = FontWeight.Medium)
                     }
                 }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Section 2: Cloud Firestore Redundancy & Sync
+            // Section 2: Cloud Firestore Database Sync
             Text(
-                text = "2. การซิงค์และสำรองข้อมูลบนคลาวด์ (Cloud Redundancy)",
+                text = "2. การซิงค์ฐานข้อมูลแบบเรียลไทม์ (Google Cloud Firestore)",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = EmeraldPrimary

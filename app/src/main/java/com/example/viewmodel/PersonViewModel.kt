@@ -561,4 +561,76 @@ class PersonViewModel(
             }
         }
     }
+
+    /**
+     * Exports population registry database as a temporary Excel file and returns a shareable content Uri
+     * for opening or saving via Android System Chooser (Google Drive, Microsoft OneDrive, Dropbox, LINE, etc.).
+     */
+    fun exportAndShareExcelData(
+        context: Context,
+        onComplete: (Boolean, Uri?, String) -> Unit
+    ) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val workbook = org.apache.poi.xssf.usermodel.XSSFWorkbook()
+                val sheet = workbook.createSheet(com.example.domain.SmartOsmExcelSchema.SHEET_NAME)
+
+                val hRow = sheet.createRow(0)
+                val headers = com.example.domain.SmartOsmExcelSchema.CANONICAL_COLUMNS
+                headers.forEachIndexed { idx, title ->
+                    hRow.createCell(idx).setCellValue(title)
+                }
+
+                val households = repository.getAllHouseholds().associateBy { it.id }
+                val persons = repository.getAllPersonsList()
+
+                persons.forEachIndexed { index, p ->
+                    val row = sheet.createRow(index + 1)
+                    val h = households[p.householdId]
+
+                    row.createCell(0).setCellValue(com.example.domain.SmartOsmExcelSchema.SCHEMA_VERSION)
+                    row.createCell(1).setCellValue(h?.householdUuid ?: "")
+                    row.createCell(2).setCellValue(p.personUuid)
+                    row.createCell(3).setCellValue(h?.houseNo ?: "")
+                    row.createCell(4).setCellValue(h?.villageNo ?: "")
+                    row.createCell(5).setCellValue(h?.subdistrict ?: "")
+                    row.createCell(6).setCellValue(h?.district ?: "")
+                    row.createCell(7).setCellValue(h?.province ?: "")
+                    row.createCell(8).setCellValue(p.nationalId ?: "")
+                    row.createCell(9).setCellValue(p.fullName)
+                    row.createCell(10).setCellValue(p.gender.name)
+                    row.createCell(11).setCellValue(p.birthDate?.toString() ?: "")
+                    row.createCell(12).setCellValue(if (p.isBirthYearOnly) "YEAR" else "DAY")
+                    row.createCell(13).setCellValue(p.houseStatus.name)
+                    row.createCell(14).setCellValue(p.personStatus.name)
+                    row.createCell(15).setCellValue(p.dataStatus.name)
+                }
+
+                val exportDir = java.io.File(context.cacheDir, "exports")
+                if (!exportDir.exists()) exportDir.mkdirs()
+                val fileName = "smart_osm_backup_${System.currentTimeMillis()}.xlsx"
+                val file = java.io.File(exportDir, fileName)
+
+                file.outputStream().use { fos ->
+                    workbook.write(fos)
+                }
+                workbook.close()
+
+                val contentUri = androidx.core.content.FileProvider.getUriForFile(
+                    context,
+                    "${context.packageName}.fileprovider",
+                    file
+                )
+
+                withContext(Dispatchers.Main) {
+                    onComplete(true, contentUri, "เตรียมไฟล์สำรองข้อมูลเรียบร้อยแล้ว (${persons.size} รายการ)")
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                withContext(Dispatchers.Main) {
+                    onComplete(false, null, "เกิดข้อผิดพลาดในการสร้างไฟล์แชร์: ${e.message}")
+                }
+            }
+        }
+    }
 }
